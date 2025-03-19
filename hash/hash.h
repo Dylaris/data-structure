@@ -10,31 +10,28 @@
     } while (0)
 #define TRUE  1
 #define FALSE 0
-#define INVALID -1
 #define LOAD_FACTOR_THRESHOLD_UPPER 0.75
 #define LOAD_FACTOR_THRESHOLD_LOWER 0.25
 #define HASH_EXPAND 1
 #define HASH_SHRINK 0
-
-typedef struct pair_tag {
-    char *key;
-    int value;
-} pair_t;
+#define NOT_FOUND -1
 
 typedef struct bucket_tag {
     struct bucket_tag *next;
-    pair_t kv;
+    char *key;
+    int value;
 } bucket_t;
 
 typedef struct hash_tag {
-    bucket_t *buckets;
+    bucket_t *heads;    /* dummy head for bucket list */
     float load_factor;
-    size_t count; /* number of stored element */
-    size_t size;  /* hash allocated space size */
+    size_t count;       /* number of stored element */
+    size_t size;        /* hash allocated space size */
 } hash_t;
 
 int is_prime(int n);
 hash_t *hash_new(size_t n);
+void hash_destroy(hash_t *ht);
 int hash_func(hash_t *ht, char *str);
 void hash_resize(hash_t **ht, int flag);
 void hash_insert(hash_t **ht, char *key, int val);

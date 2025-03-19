@@ -13,19 +13,33 @@ hash_t *hash_new(size_t n)
     if (ht == NULL) 
         ERR("new hash table");
 
-    ht->buckets = malloc(n * sizeof(bucket_t));
-    if (ht->buckets == NULL) 
+    ht->heads = malloc(n * sizeof(bucket_t));
+    if (ht->heads == NULL) 
         ERR("new hash table buckets");
-    for (size_t i = 0; i < n; i++) {
-        ht->buckets[i].kv.key = NULL;
-        ht->buckets[i].kv.value = INVALID;
-    }
+    for (size_t i = 0; i < n; i++)
+        ht->heads[i].next = NULL;
 
     ht->load_factor = 0;
     ht->count = 0;
     ht->size = n;
 
     return ht;
+}
+
+void hash_destroy(hash_t *ht)
+{
+    bucket_t *cur, *p;
+    for (size_t i = 0; i < ht->size; i++) {
+        cur = ht->heads[i].next;
+        while (cur != NULL) {
+            p = cur;
+            cur = cur->next;
+            free(p->key);
+            free(p);
+        }
+    }
+    free(ht->heads);
+    free(ht);
 }
 
 int is_prime(int n)
@@ -39,7 +53,7 @@ int is_prime(int n)
 int hash_func(hash_t *ht, char *str)
 {
     long n = 0;
-    for (int i = 0; i < strlen(str); i++)
+    for (size_t i = 0; i < strlen(str); i++)
         n = n * 31 + (long) str[i];
     return (int) (n % ht->size);
 }
@@ -57,36 +71,41 @@ void hash_resize(hash_t **ht, int flag)
     }
 
     hash_t *new_ht = hash_new(new_size);
-    bucket_t *bucket;
+    bucket_t *cur;
 
     for (size_t i = 0; i < old_size; i++) {
-        bucket = &(*ht)->buckets[i];
-        while (bucket != NULL && bucket->kv.key != NULL) {
-            hash_insert(&new_ht, bucket->kv.key, bucket->kv.value);
-            bucket = bucket->next;
+        cur = (*ht)->heads[i].next;
+        while (cur != NULL) {
+            hash_insert(&new_ht, cur->key, cur->value);
+            cur = cur->next;
         }
     }
 
+    hash_destroy(*ht);
     *ht = new_ht;
 }
 
 void hash_insert(hash_t **ht, char *key, int val)
 {
     int index = hash_func(*ht, key);
-    bucket_t *bucket = (*ht)->buckets + index;
+    bucket_t *head = (*ht)->heads + index;
 
-    if (bucket->kv.key == NULL) {
+    if (head->next == NULL) {
         /* this bucket is unused */
-        bucket->kv.value = val;
-        bucket->kv.key = strdup(key);
+        head->next = malloc(sizeof(bucket_t));
+        if (head->next == NULL)
+            ERR("add a new bucket at head");
+        head->next->key = strdup(key);
+        head->next->value = val;
+        head->next->next = NULL;
         (*ht)->count++;
     } else {
-        bucket_t *cur = bucket, *prev = NULL;
+        bucket_t *cur = head->next, *prev = head;
         int is_update = FALSE;
         while (cur != NULL) {
-            if (strcmp(cur->kv.key, key) == 0) {
+            if (strcmp(cur->key, key) == 0) {
                 /* modify the value */
-                cur->kv.value = val;
+                cur->value = val;
                 is_update = TRUE;
                 break;
             }
@@ -97,10 +116,10 @@ void hash_insert(hash_t **ht, char *key, int val)
             /* add the key-value */
             cur = malloc(sizeof(bucket_t));
             if (cur == NULL)
-                ERR("append bucket");
+                ERR("add a new bucket at tail");
+            cur->key = strdup(key);
+            cur->value = val;
             cur->next = NULL;
-            cur->kv.key = strdup(key);
-            cur->kv.value = val;
             prev->next = cur;
             (*ht)->count++;
         }
@@ -114,50 +133,37 @@ void hash_insert(hash_t **ht, char *key, int val)
 int hash_search(hash_t *ht, char *key)
 {
     int index = hash_func(ht, key);
-    bucket_t *bucket = ht->buckets + index;
+    bucket_t *head = ht->heads + index;
+    bucket_t *cur = head->next;
 
     /* invalid key */
-    if (bucket->kv.key == NULL) {
-        return INVALID;
+    if (cur == NULL) {
+        return NOT_FOUND;
     }
 
-    while (bucket != NULL) {
-        if (strcmp(bucket->kv.key, key) == 0)
-            return bucket->kv.value;
-        bucket = bucket->next;
+    while (cur != NULL) {
+        if (strcmp(cur->key, key) == 0)
+            return cur->value;
+        cur = cur->next;
     }
 
-    return INVALID;
+    return NOT_FOUND;
 }
 
 void hash_delete(hash_t **ht, char *key)
 {
-    if (hash_search(*ht, key) == INVALID)
+    if (hash_search(*ht, key) == NOT_FOUND)
         return;
 
     int index = hash_func(*ht, key);
-    bucket_t *bucket = (*ht)->buckets + index;
+    bucket_t *head = (*ht)->heads + index;
+    bucket_t *cur = head->next, *prev = head;
 
-    bucket_t *cur = bucket, *prev = NULL;
     while (cur != NULL) {
-        if (strcmp(cur->kv.key, key) == 0) {
-            if (prev == NULL) {
-                /* copy the next into the head if it exists */
-                free(cur->kv.key);
-                cur->kv.key = NULL;
-                bucket_t *next = cur->next;
-                if (next != NULL) {
-                    cur->kv.key = strdup(next->kv.key);
-                    cur->kv.value = next->kv.value;
-                    cur->next = next->next;
-                    free(next->kv.key);
-                    free(next);
-                }
-            } else {
-                prev->next = cur->next;
-                free(cur->kv.key);
-                free(cur); 
-            }
+        if (strcmp(cur->key, key) == 0) {
+            prev->next = cur->next;
+            free(cur->key);
+            free(cur);
             (*ht)->count--;
             break;
         }

@@ -1,5 +1,4 @@
 #include <criterion/criterion.h>
-#include <criterion/logging.h>
 #include <math.h>
 #include "hash.h"
 
@@ -8,10 +7,12 @@ Test(hash_table, test_hash_new_func)
     hash_t *ht = hash_new(5);
 
     cr_assert_not_null(ht, "hash table should not be null");
-    cr_assert_not_null(ht->buckets, "hash table buckets should not be null");
+    cr_assert_not_null(ht->heads, "hash table heads should not be null");
     cr_assert_eq(ht->size, 5, "hash table size should be %zu", 5);
     cr_assert_eq(ht->count, 0, "hash table count should be 0");
     cr_assert_eq(ht->load_factor, 0, "hash table laod factor should be 0");
+
+    hash_destroy(ht);
 }
 
 Test(hash_table, test_is_prime)
@@ -32,6 +33,8 @@ Test(hash_table, test_hash_func)
                                           'l' * (int) pow(31, 2) + 
                                           'l' * (int) pow(31, 1) +
                                           'o' * (int) pow(31, 0)) % ht->size);
+
+    hash_destroy(ht);
 }
 
 Test(hash_table, test_hash_insert)
@@ -51,6 +54,8 @@ Test(hash_table, test_hash_insert)
     hash_insert(&ht, "7", 1); count++;
     hash_insert(&ht, "8", 1); count++;
     cr_assert(ht->count == count, "count should be %d", count);
+
+    hash_destroy(ht);
 }
 
 Test(hash_table, test_hash_search)
@@ -70,7 +75,9 @@ Test(hash_table, test_hash_search)
     cr_assert(hash_search(ht, "2") == 2, "<key:2> <value:2>");
     cr_assert(hash_search(ht, "7") == 7, "<key:7> <value:7>");
     cr_assert(hash_search(ht, "8") == 8, "<key:8> <value:8>");
-    cr_assert(hash_search(ht, "9") == INVALID, "invalid key 9");
+    cr_assert(hash_search(ht, "9") == NOT_FOUND, "not found key 9");
+
+    hash_destroy(ht);
 }
 
 Test(hash_table, test_hash_delete)
@@ -93,9 +100,11 @@ Test(hash_table, test_hash_delete)
     hash_delete(&ht, "8"); count--;
     hash_delete(&ht, "7"); count--;
     cr_assert_eq(ht->count, count, "count should be %zu", count);
-    cr_assert(hash_search(ht, "1") == INVALID, "invalid key 1");
-    cr_assert(hash_search(ht, "2") == INVALID, "invalid key 2");
-    cr_assert(hash_search(ht, "8") == INVALID, "invalid key 8");
-    cr_assert(hash_search(ht, "7") == INVALID, "invalid key 7");
+    cr_assert(hash_search(ht, "1") == NOT_FOUND, "not found key 1");
+    cr_assert(hash_search(ht, "2") == NOT_FOUND, "not found key 2");
+    cr_assert(hash_search(ht, "8") == NOT_FOUND, "not found key 8");
+    cr_assert(hash_search(ht, "7") == NOT_FOUND, "not found key 7");
     cr_assert(hash_search(ht, "3") == 3, "<key:3> <value:3>");
+
+    hash_destroy(ht);
 }
