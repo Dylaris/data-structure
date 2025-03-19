@@ -55,6 +55,11 @@ Test(hash_table, test_hash_insert)
     hash_insert(ht, "3", 3);
     cr_assert(ht->count == count, "count should be %d", count);
 
+    /* TEST: test the resize case */
+
     free(ht->buckets);
     free(ht);
 }
+
+/* TEST: test search element from hash table */
+/* TEST: test delete element from hash table */

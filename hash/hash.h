@@ -32,8 +32,10 @@ typedef struct hash_tag {
 
 int is_prime(int n);
 hash_t *hash_new(size_t n);
-int hash_func(hash_t *hash_tbl, char *str);
-void hash_resize(hash_t *hash_tbl, int flag);
-void hash_insert(hash_t *hash_tbl, char *key, int val);
+int hash_func(hash_t *ht, char *str);
+void hash_resize(hash_t *ht, int flag);
+void hash_insert(hash_t *ht, char *key, int val);
+int hash_search(hash_t *ht, char *key);
+void hash_delete(hash_t *ht, char *key);
 
 #endif /* HASH_H */

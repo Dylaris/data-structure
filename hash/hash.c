@@ -43,6 +43,8 @@ int hash_func(hash_t *ht, char *str)
 
 void hash_resize(hash_t *ht, int flag)
 {
+    /* TODO: resize the hash table (expand or shrink) */
+
     if (flag == HASH_EXPAND) {
         /* expand */
     } else {
@@ -91,4 +93,15 @@ void hash_insert(hash_t *ht, char *key, int val)
         hash_resize(ht, HASH_EXPAND);
     else if (ht->load_factor < LOAD_FACTOR_THRESHOLD_LOWER)
         hash_resize(ht, HASH_SHRINK);
+}
+
+int hash_search(hash_t *ht, char *key)
+{
+    /* TODO: search from hash table through 
+             given key and return the value */
+}
+
+void hash_delete(hash_t *ht, char *key)
+{
+    /* TODO: delte the key-value pair from hash table */
 }
