@@ -1,19 +1,15 @@
-/*
- * Using chaining method to handle collision.
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "hash.h"
+#include "hashtbl.h"
 
-hash_t *hash_new(size_t n)
+HashTbl *hashtbl_new(size_t n)
 {
-    hash_t *ht = malloc(sizeof(hash_t));
+    HashTbl *ht = malloc(sizeof(HashTbl));
     if (ht == NULL) 
         ERR("new hash table");
 
-    ht->heads = malloc(n * sizeof(bucket_t));
+    ht->heads = malloc(n * sizeof(Bucket));
     if (ht->heads == NULL) 
         ERR("new hash table buckets");
     for (size_t i = 0; i < n; i++)
@@ -26,9 +22,9 @@ hash_t *hash_new(size_t n)
     return ht;
 }
 
-void hash_destroy(hash_t *ht)
+void hashtbl_destroy(HashTbl *ht)
 {
-    bucket_t *cur, *p;
+    Bucket *cur, *p;
     for (size_t i = 0; i < ht->size; i++) {
         cur = ht->heads[i].next;
         while (cur != NULL) {
@@ -50,19 +46,19 @@ int is_prime(int n)
     return TRUE;
 }
 
-int hash_func(hash_t *ht, char *str)
+int hash(HashTbl *ht, char *str)
 {
     long n = 0;
     for (size_t i = 0; i < strlen(str); i++)
-        n = n * 31 + (long) str[i];
+        n = n * PRIME + (long) str[i];
     return (int) (n % ht->size);
 }
 
-void hash_resize(hash_t **ht, int flag)
+void hashtbl_resize(HashTbl **ht, int flag)
 {
     size_t new_size, old_size = (*ht)->size;
 
-    if (flag == HASH_EXPAND) {
+    if (flag == HASHTBL_EXPAND) {
         /* expand */
         new_size = old_size * 2;
     } else {
@@ -70,29 +66,29 @@ void hash_resize(hash_t **ht, int flag)
         new_size = old_size / 2;
     }
 
-    hash_t *new_ht = hash_new(new_size);
-    bucket_t *cur;
+    HashTbl *new_ht = hashtbl_new(new_size);
+    Bucket *cur;
 
     for (size_t i = 0; i < old_size; i++) {
         cur = (*ht)->heads[i].next;
         while (cur != NULL) {
-            hash_insert(&new_ht, cur->key, cur->value);
+            hashtbl_insert(&new_ht, cur->key, cur->value);
             cur = cur->next;
         }
     }
 
-    hash_destroy(*ht);
+    hashtbl_destroy(*ht);
     *ht = new_ht;
 }
 
-void hash_insert(hash_t **ht, char *key, int val)
+void hashtbl_insert(HashTbl **ht, char *key, int val)
 {
-    int index = hash_func(*ht, key);
-    bucket_t *head = (*ht)->heads + index;
+    int index = hash(*ht, key);
+    Bucket *head = (*ht)->heads + index;
 
     if (head->next == NULL) {
         /* this bucket is unused */
-        head->next = malloc(sizeof(bucket_t));
+        head->next = malloc(sizeof(Bucket));
         if (head->next == NULL)
             ERR("add a new bucket at head");
         head->next->key = strdup(key);
@@ -100,7 +96,7 @@ void hash_insert(hash_t **ht, char *key, int val)
         head->next->next = NULL;
         (*ht)->count++;
     } else {
-        bucket_t *cur = head->next, *prev = head;
+        Bucket *cur = head->next, *prev = head;
         int is_update = FALSE;
         while (cur != NULL) {
             if (strcmp(cur->key, key) == 0) {
@@ -114,7 +110,7 @@ void hash_insert(hash_t **ht, char *key, int val)
         }
         if (is_update == FALSE) {
             /* add the key-value */
-            cur = malloc(sizeof(bucket_t));
+            cur = malloc(sizeof(Bucket));
             if (cur == NULL)
                 ERR("add a new bucket at tail");
             cur->key = strdup(key);
@@ -127,14 +123,14 @@ void hash_insert(hash_t **ht, char *key, int val)
 
     (*ht)->load_factor = (float) (*ht)->count / (float) (*ht)->size;
     if ((*ht)->load_factor > LOAD_FACTOR_THRESHOLD_UPPER)
-        hash_resize(ht, HASH_EXPAND);
+        hashtbl_resize(ht, HASHTBL_EXPAND);
 }
 
-int hash_search(hash_t *ht, char *key)
+int hashtbl_search(HashTbl *ht, char *key)
 {
-    int index = hash_func(ht, key);
-    bucket_t *head = ht->heads + index;
-    bucket_t *cur = head->next;
+    int index = hash(ht, key);
+    Bucket *head = ht->heads + index;
+    Bucket *cur = head->next;
 
     /* invalid key */
     if (cur == NULL) {
@@ -150,14 +146,14 @@ int hash_search(hash_t *ht, char *key)
     return NOT_FOUND;
 }
 
-void hash_delete(hash_t **ht, char *key)
+void hashtbl_delete(HashTbl **ht, char *key)
 {
-    if (hash_search(*ht, key) == NOT_FOUND)
+    if (hashtbl_search(*ht, key) == NOT_FOUND)
         return;
 
-    int index = hash_func(*ht, key);
-    bucket_t *head = (*ht)->heads + index;
-    bucket_t *cur = head->next, *prev = head;
+    int index = hash(*ht, key);
+    Bucket *head = (*ht)->heads + index;
+    Bucket *cur = head->next, *prev = head;
 
     while (cur != NULL) {
         if (strcmp(cur->key, key) == 0) {
@@ -173,5 +169,5 @@ void hash_delete(hash_t **ht, char *key)
 
     (*ht)->load_factor = (float) (*ht)->count / (float) (*ht)->size;
     if ((*ht)->load_factor < LOAD_FACTOR_THRESHOLD_LOWER)
-        hash_resize(ht, HASH_SHRINK);
+        hashtbl_resize(ht, HASHTBL_SHRINK);
 }
