@@ -104,7 +104,7 @@ void sll_update(SinglyLinkedList *sll, int old_val, int new_val)
 
 void sll_reverse(SinglyLinkedList *sll)
 {
-    /* just reverse the link */
+    /* reverse the link */
     Node *cur = sll->dummy_head.next, *prev = NULL, *next;
     while (cur != NULL) {
         next = cur->next;
