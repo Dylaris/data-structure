@@ -56,3 +56,17 @@ Test(stack_array, test_stack_pop)
 
     stack_destroy(stack);
 }
+
+Test(stack_array, test_stack_reverse)
+{
+    char *literal_str = "hello world"; 
+    char *actual = stack_reverse(literal_str, 1);
+    char *expected = "dlrow olleh";
+    cr_assert(strcmp(actual, expected) == 0);
+    free(actual);
+
+    char arr_str[] = "nice to see you";
+    actual = stack_reverse(arr_str, 0);
+    expected = "uoy ees ot ecin";
+    cr_assert(strcmp(actual, expected) == 0);
+}
