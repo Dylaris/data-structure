@@ -1,5 +1,6 @@
 #include "stack_array.h"
 #include <string.h>
+#include <ctype.h>
 
 Stack *stack_new(size_t size)
 {
@@ -90,20 +91,72 @@ char *stack_reverse(char *str, int is_literal)
     return res;
 }
 
+int stack_top(Stack *stack)
+{
+    if (!stack_is_empty(stack))
+        return stack->slots[stack->top];
+    return INVALID_VAL;
+}
+
 enum OP {
     ADD,    /* + */   
     SUB,    /* - */
     MUL,    /* * */ 
     DIV,    /* / */
-    LP,     /* ( */
-    RP      /* ) */
+    INVAILD
 };
 
-static int op_priority[] = { 1, 1, 2, 2, 4, 4 };    /* corresponding to enum OP */
+static int op_priority[] = { 1, 1, 2, 2 };    /* corresponding to enum OP */
+
+static int char2op(char c)
+{
+    switch (c) {
+    case '+': return ADD;
+    case '-': return SUB;
+    case '*': return MUL;
+    case '/': return DIV;
+    default:  return INVAILD;
+    }
+}
+
+#define is_left_paern(c)    (c == '(')
+#define is_right_paern(c)   (c == ')')
+#define is_operator(c)      (c == '+' || c == '-' || c == '*' || c == '/')
+#define is_operand(c)       (isalnum(c))
+#define high_priority(a, b) (op_priority[char2op(a)] > op_priority[char2op(b)])
 
 static char *stack_expr_in2post(char *expr, size_t size)
 {
+    Stack *stack = stack_new(100);
+    char *res = malloc(size);
+    if (!res) ERR("malloc in stack_expr_in2post");
 
+    char c;
+    int len = 0;
+    for (int i = 0; i < size; i++) {
+        c = expr[i];
+        if (is_operand(c)) {
+            res[len++] = c;
+        } else if (is_operator(c)) {
+            while (!stack_is_empty(stack) && !is_left_paern(stack_top(stack))
+                    && high_priority(stack_top(stack), c))
+                res[len++] = stack_pop(stack);
+            stack_push(stack, c);
+        } else if (is_left_paern(c)) {
+            stack_push(stack, c);
+        } else if (is_right_paern(c)) {
+            while (!stack_is_empty(stack) && !is_left_paern(stack_top(stack)))
+                res[len++] = stack_pop(stack);
+            stack_pop(stack);   /* pop the '(' */
+        }
+    } 
+    while (!stack_is_empty(stack))
+        res[len++] = stack_pop(stack);
+
+    stack_destroy(stack);
+    res[len] = '\0';
+
+    return res;
 }
 
 static char *stack_expr_in2pre(char *expr, size_t size)

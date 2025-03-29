@@ -59,3 +59,18 @@ Test(stack_array, test_stack_pop)
 
     stack_destroy(stack);
 }
+
+Test(stack_array, test_stack_top)
+{
+    Stack *stack = stack_new(3);
+
+    stack_push(stack, 1);
+    stack_push(stack, 2);
+    cr_assert_eq(stack_top(stack), 2);
+    stack_pop(stack);
+    cr_assert_eq(stack_top(stack), 1);
+    stack_pop(stack);
+    cr_assert_eq(stack_top(stack), INVLAID_VAL);
+
+    stack_destroy(stack);
+}

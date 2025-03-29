@@ -12,9 +12,9 @@
 #define STACK_EMPTY -1
 #define INVALID_VAL -2147483648     /* INT_MIN */
 #define MIN_STACK_SIZE 2            /* Used to limit the stack shrink (2 is used to test) */
-#define PREFIX  (1 << 0)
-#define INFIX   (1 << 1)
-#define POSTFIX (1 << 2)
+#define PREFIX  1
+#define INFIX   2
+#define POSTFIX 3
 
 typedef struct Stack {
     int top;
@@ -26,6 +26,7 @@ Stack *stack_new(size_t size);
 void stack_destroy(Stack *stack);
 void stack_push(Stack *stack, int value);
 int stack_pop(Stack *stack);
+int stack_top(Stack *stack);
 void stack_print(Stack *stack);
 char *stack_reverse(char *str, int is_literal);
 char *stack_convert_expr(char *expr, size_t size, int src, int dest);

@@ -70,3 +70,26 @@ Test(stack_array, test_stack_reverse)
     expected = "uoy ees ot ecin";
     cr_assert(strcmp(actual, expected) == 0);
 }
+
+Test(stack_array, test_stack_top)
+{
+    Stack *stack = stack_new(3);
+
+    stack_push(stack, 1);
+    stack_push(stack, 2);
+    cr_assert_eq(stack_top(stack), 2);
+    stack_pop(stack);
+    cr_assert_eq(stack_top(stack), 1);
+    stack_pop(stack);
+    cr_assert_eq(stack_top(stack), INVALID_VAL);
+
+    stack_destroy(stack);
+}
+
+Test(stack_array, test_stack_convert_expr)
+{
+    char *expr = "((A+B)*C-D)*E)";
+    char *res = stack_convert_expr(expr, strlen(expr), INFIX, POSTFIX);
+    cr_assert(strcmp(res, "AB+C*D-E*") == 0);
+    free(res);
+}

@@ -56,3 +56,10 @@ void stack_print(Stack *stack)
     }
     printf("\n");
 }
+
+int stack_top(Stack *stack)
+{
+    if (!stack_is_empty(stack))
+        return stack->top->data;
+    return INVLAID_VAL;
+}

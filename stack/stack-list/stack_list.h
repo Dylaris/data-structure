@@ -24,6 +24,7 @@ typedef struct Stack {
 Stack *stack_new();
 void stack_destroy(Stack *stack);
 void stack_push(Stack *stack, int value);
+int stack_top(Stack *stack);
 int stack_pop(Stack *stack);
 void stack_print(Stack *stack);
 #define stack_is_empty(stack) (stack->top == NULL)
