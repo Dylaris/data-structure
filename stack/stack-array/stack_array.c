@@ -119,75 +119,109 @@ static int char2op(char c)
     }
 }
 
-#define is_left_paern(c)    (c == '(')
-#define is_right_paern(c)   (c == ')')
+#define is_left_paren(c)    (c == '(')
+#define is_right_paren(c)   (c == ')')
 #define is_operator(c)      (c == '+' || c == '-' || c == '*' || c == '/')
 #define is_operand(c)       (isalnum(c))
 #define high_priority(a, b) (op_priority[char2op(a)] > op_priority[char2op(b)])
 
-static char *stack_expr_in2post(char *expr, size_t size)
+static char *stack_expr_in2post(char *expr, size_t len)
 {
     Stack *stack = stack_new(100);
-    char *res = malloc(size);
+    char *res = malloc(len + 1);
     if (!res) ERR("malloc in stack_expr_in2post");
 
     char c;
-    int len = 0;
-    for (int i = 0; i < size; i++) {
+    int off = 0;
+    for (int i = 0; i < len; i++) {
         c = expr[i];
         if (is_operand(c)) {
-            res[len++] = c;
+            res[off++] = c;
         } else if (is_operator(c)) {
-            while (!stack_is_empty(stack) && !is_left_paern(stack_top(stack))
+            while (!stack_is_empty(stack) && !is_left_paren(stack_top(stack))
                     && high_priority(stack_top(stack), c))
-                res[len++] = stack_pop(stack);
+                res[off++] = stack_pop(stack);
             stack_push(stack, c);
-        } else if (is_left_paern(c)) {
+        } else if (is_left_paren(c)) {
             stack_push(stack, c);
-        } else if (is_right_paern(c)) {
-            while (!stack_is_empty(stack) && !is_left_paern(stack_top(stack)))
-                res[len++] = stack_pop(stack);
+        } else if (is_right_paren(c)) {
+            while (!stack_is_empty(stack) && !is_left_paren(stack_top(stack)))
+                res[off++] = stack_pop(stack);
             stack_pop(stack);   /* pop the '(' */
         }
     } 
     while (!stack_is_empty(stack))
-        res[len++] = stack_pop(stack);
+        res[off++] = stack_pop(stack);
+    res[off] = '\0';
 
     stack_destroy(stack);
-    res[len] = '\0';
 
     return res;
 }
 
-static char *stack_expr_in2pre(char *expr, size_t size)
+static char *stack_expr_in2pre(char *expr, size_t len)
 {
+    /*
+     * 'Infix to Prefix' is the opposite of 'Infix to Postfix'. In this case,
+     * the expression is scanned from right to left. Additionally, the opening
+     * parenthesis is ')' instead of '('—this must be taken into account.
+     *
+     * Other steps remain the same as the 'Infix to Postfix' conversion. The key 
+     * difference is that after processing the expression, we need to reverse 
+     * the result, as Prefix notation differs from Postfix in terms of operand 
+     * and operator order.
+     */
 
+    Stack *stack = stack_new(100);
+    char *res = malloc(len + 1);
+    if (!res) ERR("malloc in stack_expr_in2pre");
+
+    char c;
+    int off = 0;
+
+    for (int i = len - 1; i >= 0; i--) {
+        c = expr[i];
+        if (is_operand(c)) {
+            res[off++] = c;
+        } else if (is_operator(c)) {
+            while (!stack_is_empty(stack) && !is_right_paren(stack_top(stack))
+                    && high_priority(stack_top(stack), c))
+                res[off++] = stack_pop(stack);
+            stack_push(stack, c);
+        } else if (is_right_paren(c)) {
+            stack_push(stack, c);
+        } else if (is_left_paren(c)) {
+            while (!stack_is_empty(stack) && !is_right_paren(stack_top(stack)))
+                res[off++] = stack_pop(stack);
+            stack_pop(stack);   /* pop the ')' */
+        }
+    } 
+    while (!stack_is_empty(stack))
+        res[off++] = stack_pop(stack);
+    res[off] = '\0';
+    res = stack_reverse(res, 0);    /* reverse the order between operator and operand */
+
+    stack_destroy(stack);
+
+    return res;
 }
 
-static char *stack_expr_pre2in(char *expr, size_t size)
-{
-
-}
-
-static char *stack_expr_pre2post(char *expr, size_t size)
-{
-
-}
-
-static char *stack_expr_post2pre(char *expr, size_t size)
-{
-
-}
-
-static char *stack_expr_post2in(char *expr, size_t size)
-{
-
-}
+/*
+ * Use a stack to build an expression tree. Once the tree is built,
+ * we can perform pre-order, post-order, or in-order traversal to
+ * 
+ * So, no need to bother implementing the functions below — we've got it all
+ * covered with tree magic! :-))
+ */
+static char *stack_expr_pre2in(char *expr, size_t len) { }
+static char *stack_expr_pre2post(char *expr, size_t len) { }
+static char *stack_expr_post2pre(char *expr, size_t len) { }
+static char *stack_expr_post2in(char *expr, size_t len) { }
 
 typedef struct ConversionRule {
     int src;
     int dest;
-    char* (*convert_func)(char* expr, size_t size);
+    char* (*convert_func)(char* expr, size_t len);
 } ConversionRule;
 
 ConversionRule conversion_rules[] = {
@@ -199,13 +233,13 @@ ConversionRule conversion_rules[] = {
     { POSTFIX, INFIX  , stack_expr_post2in  }
 };
 
-char *stack_convert_expr(char *expr, size_t size, int src, int dest)
+char *stack_convert_expr(char *expr, size_t len, int src, int dest)
 {
-    if (src == dest || size < 3) return expr;
+    if (src == dest || len < 3) return expr;
 
     for (int i = 0; i < sizeof(conversion_rules) / sizeof(ConversionRule); i++) {
         if (conversion_rules[i].src == src && conversion_rules[i].dest == dest) {
-            return conversion_rules[i].convert_func(expr, size);
+            return conversion_rules[i].convert_func(expr, len);
         }
     }
 

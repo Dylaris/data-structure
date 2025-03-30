@@ -88,8 +88,13 @@ Test(stack_array, test_stack_top)
 
 Test(stack_array, test_stack_convert_expr)
 {
-    char *expr = "((A+B)*C-D)*E)";
-    char *res = stack_convert_expr(expr, strlen(expr), INFIX, POSTFIX);
+    char *expr = "((A+B)*C-D)*E", *res = NULL;
+
+    res = stack_convert_expr(expr, strlen(expr), INFIX, POSTFIX);
     cr_assert(strcmp(res, "AB+C*D-E*") == 0);
+    free(res);
+
+    res = stack_convert_expr(expr, strlen(expr), INFIX, PREFIX);
+    cr_assert(strcmp(res, "*-*+ABCDE") == 0);
     free(res);
 }

@@ -29,7 +29,7 @@ int stack_pop(Stack *stack);
 int stack_top(Stack *stack);
 void stack_print(Stack *stack);
 char *stack_reverse(char *str, int is_literal);
-char *stack_convert_expr(char *expr, size_t size, int src, int dest);
+char *stack_convert_expr(char *expr, size_t len, int src, int dest);
 #define stack_is_empty(stack) (stack->top == STACK_EMPTY)
 #define stack_is_full(stack) (stack->top == (stack->size - 1))
 
