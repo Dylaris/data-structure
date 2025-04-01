@@ -9,7 +9,7 @@
         fprintf(stderr, "%s\n", msg); \
         exit(1); \
     } while (0)
-#define INVALID -2147483647
+#define INVALID -2147483648
 #define queue_is_full(q) (q->front == (q->rear + 1) % q->size)
 #define queue_is_empty(q) (q->front == -1 && q->rear == -1)
 
