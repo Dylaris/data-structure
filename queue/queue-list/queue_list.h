@@ -9,7 +9,7 @@
         fprintf(stderr, "%s\n", msg); \
         exit(1); \
     } while (0)
-#define INVALID -2147483647
+#define INVALID -2147483648
 #define queue_is_empty(q) (q->dummy_head.next == NULL)
 
 typedef struct Node {

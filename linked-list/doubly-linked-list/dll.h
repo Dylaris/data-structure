@@ -15,7 +15,7 @@ typedef struct Node {
     struct Node *prev;
 } Node;
 
-#define INVALID_DATA -1
+#define INVALID_DATA -2147483648
 
 typedef struct DoublyLinkedList {
     Node dummy_head;

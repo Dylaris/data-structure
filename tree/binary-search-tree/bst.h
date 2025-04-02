@@ -24,12 +24,14 @@ typedef struct Node {
 } Node;
 
 void bst_destroy(Node *root);
-void bst_insert(Node **root, int data);
-int bst_remove(Node *root, int data);
+Node *bst_insert(Node *root, int data);
+Node *bst_remove(Node *root, int data);
 void bst_traverse(Node *root, int mode);
-int bst_search(Node *root, int data);
-int bst_find_max(Node *root);
-int bst_find_min(Node *root);
+Node *bst_search(Node *root, int data);
+Node *bst_find_max(Node *root);
+Node *bst_find_min(Node *root);
 int bst_find_height(Node *root);
+int bst_verify(Node *root);     /* Verify the tree is a binary search tree */
+Node *bst_get_successor(Node *root, int data);
 
 #endif /* BST_H */
